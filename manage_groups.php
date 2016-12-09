@@ -37,12 +37,13 @@
 	require_once('../../config.php');
     require_once('lib.php');
     
-    $gId = optional_param('group', 0, PARAM_INT);
-	$cId = optional_param('cat', 0, PARAM_INT);
-	
-	$title = get_string('category_restrict','local_category_restrict');
+
+	$edit = optional_param('edit', 0, PARAM_INT);
+	$delete = optional_param('del', 0, PARAM_INT);
+    
+	$title = get_string('manage_groups','local_category_restrict');
     $PAGE->set_pagelayout('admin');
-    $PAGE->set_url(new moodle_url('/local/category_restrict/index.php'));
+    $PAGE->set_url(new moodle_url('/local/category_restrict/manage_groups.php'));
     $PAGE->set_title($title);
     
 	
@@ -50,109 +51,109 @@
 	echo $OUTPUT->header();
 	echo $OUTPUT->heading_with_help($title, 'category_restrict','local_category_restrict');
 
+
+
     if (!is_siteadmin()) {
         print_error('Access denied');
     }
 
-	$allGroups	=	get_all_groups();
-	$allCats	=	get_all_category();
-	echo $OUTPUT->box_start();
-
-	if($gId > 0 && $cId >0) {
-		$Courses =	get_courses_by_cat($cId);
+	if(isset($_POST['submitbutton'])) {
+		$message	= insertGroups($_POST);
+		echo "<h2> $message </h2>";
 	}
 	
 	
-?>
-<script src="jquery.min.js"></script>
-<link href="multiple-select.css" rel="stylesheet" />
-<link href="base.css" rel="stylesheet" />
-<script src="multiple-select.js"></script>
-
-<form method="post" action="">
-  <div class="form-group">
-    <label for="exampleInputEmail1">Select Group</label>
-    <select id="group" required="required" name="group">
-                                      				<?php	echo "<option value=''>Select a Group</option>";
-
-														foreach($allGroups as $Group){
-															if(isset($gId) && $Group->id == $gId)
-																echo "<option value='".$Group->id."' selected='selected'>$Group->group_name</option>";
-															else
-																echo "<option value='".$Group->id."'>$Group->group_name</option>";
-														}
-														?>
-									</select>
-    
-  </div>
-  
-  <div class="form-group">
-    <label for="exampleInputEmail1">Select Category</label>
-    <select id="cat" required="required" name="cat">
-                                      				<?php	echo "<option value=''>Select a Category</option>";
-
-														foreach($allCats as $Cat){
-															if(isset($cId) && $Cat->id == $cId)
-																echo "<option value='".$Cat->id."' selected='selected'>$Cat->name</option>";
-															else
-																echo "<option value='".$Cat->id."'>$Cat->name</option>";
-														}
-														?>
-									</select>
-    
-  </div>
-  
-  <div class="form-group">
-    <label for="exampleSelect1">Select Course / Resources</label>
-    	<select multiple="multiple" style="width:300px" name="test[]" id="courses">
-        <?php foreach($Courses as $Course){?>
-        <optgroup label="<?php echo $Course->id.":".$Course->fullname;?>">
-            <?php echo display_course_modules($Course->id);?>
-            <option value="1">Forum - Test</option>
-            <option value="2">Course Ref link</option>
-            <option value="3">Third Resource</option>
-            <option value="4">Fourth Resource</option>
-        </optgroup>
-        <?php } ?>
-        
-    </select>
-
-  </div>
-  
-  <button type="submit" class="btn btn-primary">Submit</button>
-</form>
-
-<script>
-        $("#courses").multipleSelect({
-            filter: true,
-           
-        });
-		$("#getSelectsBtn").click(function() {
-            alert("Selected values: " + $("select").multipleSelect("getSelects"));
-            alert("Selected texts: " + $("select").multipleSelect("getSelects", "text"));
-        });
-		$("#getSelectsBtn1").click(function() {
-            $("select").multipleSelect("checkAll");
-        });
-		function updateCourse(){
-		 	alert("Selected texts: " + $("select").multipleSelect("getSelects", "text"));
-			 $("#selVal").val($("select").multipleSelect("getSelects", "text"));
-			 return true;
-		}
-		
-		$('#group').on('change', function() {
-  			var group = this.value;
-			var cat = $('#cat').val();
-			location.href="?group="+group+"&cat="+cat;
-		})
-		$('#cat').on('change', function() {
-  			var cat = this.value;
-			var group =$('#group').val();
-			alert('thiss'+group);
-			location.href="?group="+group+"&cat="+cat;
-		})
-    </script>
 	
+	if(isset($_POST['updatebutton'])) {
+		$message	= updateGroup($_POST);
+		echo "<h2> $message </h2>";
+	}
+	
+	
+	if($edit > 0) {
+		$Group	=	getGroupById($edit);
+	}
+	if($delete > 0) {
+		
+		$Group	=	deleteGroup($delete);
+	}
+	
+	$rsGroups = $DB->get_records('local_cr_groups');
+	
+	echo $OUTPUT->box_start();
+
+?>
+<?php if ($edit > 0) {?>
+<form class="mform" id="mform1" method="post">
+	<input type="hidden" name="edit" id="edit" value="<?php echo $Group->id;?>"  />
+	<fieldset id="id_moodle" class="clearfix collapsible">
+		
+		<legend>Update Group</legend>
+		<div class="fcontainer clearfix" >
+			<div id="fitem_id_username" class="fitem fitem_ftext  "><div class="fitemtitle"><label for="id_groupname">Group Name </label></div>
+			<div class="felement ftext"><input size="20" name="group_name" id="id_groupname" type="text" value="<?php echo $Group->group_name;?>"></div></div>
+		</div>
+	
+	</fieldset>
+	
+	<fieldset>
+		
+		<div id="fgroup_id_buttonar" class="fitem fitem_actionbuttons fitem_fgroup "><div class="felement fgroup"><input name="updatebutton" value="Update Group" id="id_submitbutton" type="submit"> <input name="cancel" value="Cancel" onclick="skipClientValidation = true; return true;" class=" btn-cancel" id="id_cancel" type="submit"></div></div>
+		
+	</fieldset>
+		
+</form>
+<?php } else {?>
+<form class="mform" id="mform1" method="post">
+	<fieldset id="id_moodle" class="clearfix collapsible">
+		
+		<legend>Add New Group</legend>
+		<div class="fcontainer clearfix" >
+			<div id="fitem_id_username" class="fitem fitem_ftext  "><div class="fitemtitle"><label for="id_groupname">Group Name </label></div>
+			<div class="felement ftext"><input size="20" name="group_name" id="id_groupname" type="text"></div></div>
+		</div>
+	
+	</fieldset>
+	
+	<fieldset>
+		
+		<div id="fgroup_id_buttonar" class="fitem fitem_actionbuttons fitem_fgroup "><div class="felement fgroup"><input name="submitbutton" value="Add Group" id="id_submitbutton" type="submit"> <input name="cancel" value="Cancel" onclick="skipClientValidation = true; return true;" class=" btn-cancel" id="id_cancel" type="submit"></div></div>
+		
+	</fieldset>
+		
+</form>
+<?php } ?>
+
+
+  <h2> Manage Groups </h2>                                                                               
+  <div class="table-responsive">          
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Group Name</th>
+        <th>Group Size</th>
+        <th>Edit</th>
+      </tr>
+    </thead>
+    <tbody>
+	<?php $i=1;if(count($rsGroups) > 0) {
+		foreach ($rsGroups as $Group) {
+	?>
+      <tr>
+        <td><?php echo $i++;?></td>
+        <td><?php echo $Group->group_name;?></td>
+        <td><?php echo get_group_size($Group->id);?></td>
+        <td><a title="Delete" href="?del=<?php echo $Group->id;?>"><img src="<?php echo $OUTPUT->pix_url('t/delete');?>" alt="Delete" class="iconsmall"></a> 
+		<a title="Edit" href="?edit=<?php echo $Group->id;?>"><img src="<?php echo $OUTPUT->pix_url('t/edit');?>" alt="Edit" class="iconsmall"></a>
+		<a title="Assign" href="assign_members.php?gId=<?php echo $Group->id;?>"><img src="<?php echo $OUTPUT->pix_url('i/user');?>" alt="Assign" class="iconsmall"></a>
+		</td>
+      </tr>
+	  <?php } }?>
+    </tbody>
+  </table>
+  </div>
+
 <?php
 	
 	echo $OUTPUT->box_end();
