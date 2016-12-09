@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/category_rstrict/db" VERSION="20131122" COMMENT="XMLDB file for Moodle local/category_restrict"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+    <TABLES>
+        <TABLE NAME="local_cr_groups" COMMENT="Groups instead of Cohort Gropups." NEXT="local_cr_group_members">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="group_name"/>
+                <FIELD NAME="group_name" TYPE="char" LENGTH="200" NOTNULL="false" SEQUENCE="false" COMMENT="The id of the criterion type" PREVIOUS="id" />
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="group_id" />
+            </KEYS>
+        </TABLE>
+        <TABLE NAME="local_cr_group_members" COMMENT="group members" PREVIOUS="local_cr_groups" NEXT="local_cr">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="group_id"/>
+                <FIELD NAME="group_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="user_id"/>
+                <FIELD NAME="user_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="group_id"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+            </KEYS>
+        </TABLE>
+        <TABLE NAME="local_cr" COMMENT="Default comment for the table, please edit me" PREVIOUS="local_category_restric_group_members">
+            <FIELDS>
+                <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="group_id"/>
+                <FIELD NAME="group_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="id" NEXT="restrict_id"/>
+                <FIELD NAME="restrict_id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" PREVIOUS="group_id" NEXT="body"/>
+                <FIELD NAME="restrict_type" TYPE="char" LENGTH="50" NOTNULL="false" SEQUENCE="false" PREVIOUS="restrict_id" NEXT="parent_id"/>
+                <FIELD NAME="parent_id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" PREVIOUS="restrict_type"/>
+            </FIELDS>
+            <KEYS>
+                <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="id"/>
+            </KEYS>
+        </TABLE>
+    </TABLES>
+</XMLDB>
