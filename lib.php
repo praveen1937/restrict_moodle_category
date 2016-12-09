@@ -115,3 +115,24 @@ function get_all_category() {
 	$result = $DB->get_records('course_categories');
 	return $result;
 }
+function get_courses_by_cat($cat) {
+	global $DB;
+	$result = $DB->get_records('course', array('category'=>$cat));
+	return $result;
+}
+function display_course_modules($csId) {
+	global $DB;
+	$result = $DB->get_records('course_modules', array('course'=>$csId));
+	foreach($result as $Module) {
+		$ModuleName = get_module_name($Module);
+		echo "<option value='".$Module->id."'>$Module->name</option>"; 
+	}
+}
+function get_module_name($Module) {
+	global $DB;
+	$result = $DB->get_records('course_modules', array('course'=>$csId));
+	foreach($result as $Module) {
+		$ModuleName = get_module_name($Module);
+		echo "<option value='".$Module->id."'>$Module->name</option>"; 
+	}
+}
