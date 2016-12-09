@@ -37,7 +37,9 @@
 	require_once('../../config.php');
     require_once('lib.php');
     
-    
+    $gId = optional_param('group', 0, PARAM_INT);
+	$cId = optional_param('cat', 0, PARAM_INT);
+	
 	$title = get_string('category_restrict','local_category_restrict');
     $PAGE->set_pagelayout('admin');
     $PAGE->set_url(new moodle_url('/local/category_restrict/index.php'));
@@ -56,6 +58,11 @@
 	$allCats	=	get_all_category();
 	echo $OUTPUT->box_start();
 
+	if($gId > 0 && $cId >0) {
+		$Courses =	get_courses_by_cat($cId);
+	}
+	
+	
 ?>
 <script src="jquery.min.js"></script>
 <link href="multiple-select.css" rel="stylesheet" />
@@ -65,10 +72,13 @@
 <form method="post" action="">
   <div class="form-group">
     <label for="exampleInputEmail1">Select Group</label>
-    <select id="batch" required="required" name="batch">
+    <select id="group" required="required" name="group">
                                       				<?php	echo "<option value=''>Select a Group</option>";
 
 														foreach($allGroups as $Group){
+															if(isset($gId) && $Group->id == $gId)
+																echo "<option value='".$Group->id."' selected='selected'>$Group->group_name</option>";
+															else
 																echo "<option value='".$Group->id."'>$Group->group_name</option>";
 														}
 														?>
@@ -81,8 +91,11 @@
     <select id="cat" required="required" name="cat">
                                       				<?php	echo "<option value=''>Select a Category</option>";
 
-														foreach($allCats as $Cats){
-																echo "<option value='".$Cats->id."'>$Cats->name</option>";
+														foreach($allCats as $Cat){
+															if(isset($cId) && $Cat->id == $cId)
+																echo "<option value='".$Cat->id."' selected='selected'>$Cat->name</option>";
+															else
+																echo "<option value='".$Cat->id."'>$Cat->name</option>";
 														}
 														?>
 									</select>
@@ -92,34 +105,16 @@
   <div class="form-group">
     <label for="exampleSelect1">Select Course / Resources</label>
     	<select multiple="multiple" style="width:300px" name="test[]" id="courses">
-        <optgroup label="First Course ">
+        <?php foreach($Courses as $Course){?>
+        <optgroup label="<?php echo $Course->id.":".$Course->fullname;?>">
+            <?php echo display_course_modules($Course->id);?>
             <option value="1">Forum - Test</option>
             <option value="2">Course Ref link</option>
             <option value="3">Third Resource</option>
             <option value="4">Fourth Resource</option>
         </optgroup>
-        <optgroup label="Second Course">
-            <option value="11">210</option>
-            <option value="12">321</option>
-            <option value="13">432</option>
-            <option value="14">543</option>
-            <option value="15">654</option>
-            <option value="16">765</option>
-            <option value="17">876</option>
-            <option value="18">987</option>
-            <option value="19">098</option>
-        </optgroup>
-        <optgroup label="Third Course">
-            <option value="20">012</option>
-            <option value="21">123</option>
-            <option value="22">234</option>
-            <option value="23">345</option>
-            <option value="24">456</option>
-            <option value="25">567</option>
-            <option value="26">678</option>
-            <option value="27">789</option>
-            <option value="28">890</option>
-        </optgroup>
+        <?php } ?>
+        
     </select>
 
   </div>
@@ -130,7 +125,7 @@
 <script>
         $("#courses").multipleSelect({
             filter: true,
-            multiple: true,
+           
         });
 		$("#getSelectsBtn").click(function() {
             alert("Selected values: " + $("select").multipleSelect("getSelects"));
@@ -144,6 +139,18 @@
 			 $("#selVal").val($("select").multipleSelect("getSelects", "text"));
 			 return true;
 		}
+		
+		$('#group').on('change', function() {
+  			var group = this.value;
+			var cat = $('#cat').val();
+			location.href="?group="+group+"&cat="+cat;
+		})
+		$('#cat').on('change', function() {
+  			var cat = this.value;
+			var group =$('#group').val();
+			alert('thiss'+group);
+			location.href="?group="+group+"&cat="+cat;
+		})
     </script>
 	
 <?php
