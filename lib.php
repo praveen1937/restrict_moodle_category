@@ -9,6 +9,7 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+
 function insertGroups($Param) {
 	global $DB;
 	$groupName	= $Param['group_name'];
@@ -112,6 +113,7 @@ function updateGroupMembers($Param) {
 }
 function get_all_category() {
 	global $DB;
+	
 	$result = $DB->get_records('course_categories');
 	return $result;
 }
@@ -122,17 +124,19 @@ function get_courses_by_cat($cat) {
 }
 function display_course_modules($csId) {
 	global $DB;
+	
 	$result = $DB->get_records('course_modules', array('course'=>$csId));
 	foreach($result as $Module) {
-		$ModuleName = get_module_name($Module);
-		echo "<option value='".$Module->id."'>$Module->name</option>"; 
+	
+		$module_name = $DB->get_field_sql("select name from {modules} c where c.id = ".$Module->module."");
+	
+		 $sql = "SELECT cm.id as cm_id, m.name as cm_name, md.name AS mod_type FROM {course_modules} cm JOIN {modules} md ON md.id = cm.module JOIN {".$module_name."} m ON m.id = cm.instance $sectionjoin WHERE cm.id = ".$Module->id." AND md.name = '$module_name'";
+	
+    		$rsMod =  $DB->get_record_sql($sql, $params, $strictness);
+			echo "<option value='".$rsMod->cm_id."'>$rsMod->cm_name</option>";
 	}
 }
 function get_module_name($Module) {
 	global $DB;
-	$result = $DB->get_records('course_modules', array('course'=>$csId));
-	foreach($result as $Module) {
-		$ModuleName = get_module_name($Module);
-		echo "<option value='".$Module->id."'>$Module->name</option>"; 
-	}
+	//$result = get_fast_modinfo($Module->course);
 }
