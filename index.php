@@ -108,10 +108,7 @@
         <?php foreach($Courses as $Course){?>
         <optgroup label="<?php echo $Course->id.":".$Course->fullname;?>">
             <?php echo display_course_modules($Course->id);?>
-            <option value="1">Forum - Test</option>
-            <option value="2">Course Ref link</option>
-            <option value="3">Third Resource</option>
-            <option value="4">Fourth Resource</option>
+           
         </optgroup>
         <?php } ?>
         
@@ -148,7 +145,6 @@
 		$('#cat').on('change', function() {
   			var cat = this.value;
 			var group =$('#group').val();
-			alert('thiss'+group);
 			location.href="?group="+group+"&cat="+cat;
 		})
     </script>
