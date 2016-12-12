@@ -4,7 +4,7 @@
  * Library of useful functions
  * @copyright 2013 Bruno Sampaio
  * @package core
- * @subpackage institution
+ * @subpackage institutionaaq
  */
 
 defined('MOODLE_INTERNAL') || die;
