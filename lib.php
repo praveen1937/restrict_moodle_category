@@ -1,15 +1,11 @@
 <?php
-
 /**
  * Library of useful functions
  * @copyright 2013 Bruno Sampaio
  * @package core
  * @subpackage institutionaaq
  */
-
 defined('MOODLE_INTERNAL') || die;
-
-
 function insertGroups($Param) {
 	global $DB;
 	$groupName	= $Param['group_name'];
@@ -22,16 +18,13 @@ function insertGroups($Param) {
 		$lastinsertid = $DB->insert_record('local_cr_groups', $record, false);
 		return 'Group Added';
 	}
-
 }
-
 function get_group_size($gId) {
 	global $DB;
 	//echo $gId; exit;
 	$result = $DB->count_records('local_cr_group_members', array('group_id' => $gId));
 	return $result;
 }
-
 function getGroupById($gId) {
 	global $DB;
 	//echo $gId; exit;
@@ -48,7 +41,6 @@ function updateGroup($Param) {
 //	exit;
 	$DB->execute($sql);
 	return 'Group Updated';
-
 }
 function deleteGroup($groupId) {
 	global $DB;
@@ -56,10 +48,11 @@ function deleteGroup($groupId) {
 	
 	
 	$sql = "delete from {local_cr_groups} where id = '$groupId'";
-//	exit;
 	$DB->execute($sql);
+	
+	$sqlUser = "delete from {local_cr_group_members} where group_id = '$groupId'";
+	$DB->execute($sqlUser);
 	return 'Group Updated';
-
 }
 function get_group_users($gId) {
 	global $DB;
@@ -72,7 +65,6 @@ function get_group_users($gId) {
 		return NULL;
 	}
 }
-
 function get_potential_users($gId) {
 	global $DB;
 	//echo $gId; exit;
@@ -105,11 +97,9 @@ function updateGroupMembers($Param) {
 		
 		$lastinsertid = $DB->insert_record('local_cr_group_members', $record, false);
 	}
-
 	
 	return 'Group Updated';
 	
-
 }
 function get_all_category() {
 	global $DB;
@@ -117,18 +107,19 @@ function get_all_category() {
 	$result = $DB->get_records('course_categories');
 	return $result;
 }
-
-function get_courses_select_box($cId, gId) {
+function get_courses_select_box($catId, $gId) {
 	global $DB;
 	$select ='';
-	$Courses = $DB->get_records('course', array('category'=>$cId));
-	echo "comes";exit;
+	$Courses = $DB->get_records('course', array('category'=>$catId));
+	
+	$CategoryChecked = check_selected($catId, 'category', $gId);
+	
 	$ip = "-";
-	"<option value='".$rsMod->cm_id."'> $rsMod->cm_id - $rsMod->cm_name</option>";
-	$select .= "<select multiple=multiple style=width:300px name=multiCourse id=multiCourse>";
+	$select .= '<select multiple="multiple" style="width:300px" name="multiCourse" id="multiCourse">';
         foreach($Courses as $Course){
+			$CourseChecked = check_selected($Course->id, 'course', $gId);
         	$select .= "<optgroup label='".$Course->id.$ip.$Course->fullname."'>";
-            $select .= display_course_modules($Course->id);
+            $select .= display_course_modules($Course->id,$CategoryChecked,$CourseChecked,$gId);
            
         	$select .= "</optgroup>";
         } 
@@ -137,24 +128,41 @@ function get_courses_select_box($cId, gId) {
 	
 	return $select;
 }
+//$restrictId => catId / CourseId / Module ID $type = cat/course/module
+function check_selected($restrictId, $type, $group) {
+	global $DB;
+	
+	if($DB->record_exists('local_cr', array('restrict_id' => $restrictId, 'restrict_type' => $type,  'group_id' => $group))) {
+		return true;
+	} else {
+		return false;
+	}
+}
 function get_courses_by_cat($cat) {
 	global $DB;
 	$result = $DB->get_records('course', array('category'=>$cat));
 	return $result;
 }
-function display_course_modules($csId) {
+function display_course_modules($csId,$CategoryChecked,$CourseChecked,$gId) {
 	global $DB;
-	
+	$option = '';
 	$result = $DB->get_records('course_modules', array('course'=>$csId));
-	foreach($result as $Module) {
 	
+	foreach($result as $Module) {
+		
 		$module_name = $DB->get_field_sql("select name from {modules} c where c.id = ".$Module->module."");
 	
 		 $sql = "SELECT cm.id as cm_id, m.name as cm_name, md.name AS mod_type FROM {course_modules} cm JOIN {modules} md ON md.id = cm.module JOIN {".$module_name."} m ON m.id = cm.instance $sectionjoin WHERE cm.id = ".$Module->id." AND md.name = '$module_name'";
 	
     		$rsMod =  $DB->get_record_sql($sql, $params, $strictness);
-			return "<option value='".$rsMod->cm_id."'> $rsMod->cm_id - $rsMod->cm_name</option>";
+			$ModuleChecked = check_selected($rsMod->cm_id, 'module', $gId);
+			if($CategoryChecked==true || $CourseChecked == true || $ModuleChecked == true) {
+				$option .= "<option value='".$rsMod->cm_id."' selected='selected'>$rsMod->cm_id - $rsMod->cm_name</option>";
+			} else {
+				$option .= "<option value='".$rsMod->cm_id."'>$rsMod->cm_id - $rsMod->cm_name</option>";
+			}
 	}
+	return $option;
 }
 function insert_multiple_course($Param) {
 	global $DB;
@@ -163,17 +171,22 @@ function insert_multiple_course($Param) {
 	$catId		= $Param['cat'];
 	$courseCatId	= $Param['catCourseIds'];
 	
+	//Delete Records
+	$msg = delete_multiple_course($groupId,$catId);
+	
 	if(trim($courseCatId) == 'All') {
 		insert_cr_help($groupId,$catId,$catId,'category',0);
 	} else {
 		$coursesArr = explode("=>",$courseCatId);
 		foreach($coursesArr as $Courses) {
 			$courseContent = explode(':',$Courses,2);
+			
 			$course = $courseContent[0];
 			$content ='';
 			if(count($courseContent)==2) {
 				$content = $courseContent[1];
 			}
+		
 			list($courseId, $courseName) = explode('-',$course,2);
 			$courseId = str_replace('[','',$courseId);
 			if($content=='') {
@@ -189,7 +202,6 @@ function insert_multiple_course($Param) {
 	}
 	return "Courses updated";
 }
-
 function insert_cr_help($groupId,$catId,$resId,$resType,$parentId) {
 	global $DB;
 	
@@ -203,3 +215,51 @@ function insert_cr_help($groupId,$catId,$resId,$resType,$parentId) {
 		
 		$lastinsertid = $DB->insert_record('local_cr', $record, false);
 }
+function get_groups_cats($cId,$gId) {
+	global $DB;
+	
+		$sqlWhere ="where ";
+		$sql='';
+		if($gId>0) {
+			$sql = "a.group_id = '$gId' ";
+		}
+		if($cId>0) {
+			if($sql=='') {
+				$sql = "a.category_id = '$cId'";
+			} else {
+				$sql = "and a.category_id = '$cId'";
+			}
+		}
+		if($sql!='') {
+			$sql = $sqlWhere.$sql;
+		}
+		
+		
+		
+		$sqlNew = "select * from mdl_local_cr a group by concat(a.group_id, a.category_id)";
+		
+		$result =  $DB->get_records_sql($sqlNew);
+		
+		return $result;
+	
+}
+
+function get_group_name($gId) {
+	global $DB;
+	$group_name = $DB->get_field_sql("select group_name from {local_cr_groups} where id = '$gId'");
+	return $group_name;
+}
+function get_cat_name($cId) {
+	global $DB;
+	$cat_name = $DB->get_field_sql("select name from {course_categories} where id = '$cId'");
+	return $cat_name;
+}
+
+function delete_multiple_course($groupId,$catId) {
+	global $DB;
+	$sql = "delete from {local_cr} where group_id = '$groupId' and category_id = '$catId'";
+	$DB->execute($sql);
+	return "Records Deleted!";
+}
+		
+		
