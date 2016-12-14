@@ -13,7 +13,6 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <htt00p://www.gnu.org/licenses/>.
-
 //  Livetek Software Consulting Services custom code
 //  Coder: Deepali Gujarathi
 //  Contact: info@livetek.co.in
@@ -21,7 +20,6 @@
 //
 //  Description: Allows admin to enrol one or more users into multiple courses at the same time.
 //  Using this plugin allows admin to manage course enrolments from one screen itself
-
 /**
  * Multiple Enrollments - Allows admin to enrol one or more users into multiple courses at the same time.
  *                        There is a single screen which allows admin to manage course enrolments.
@@ -33,12 +31,12 @@
  * @contact      info@livetek.co.in
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 	require_once('../../config.php');
     require_once('lib.php');
     
     $gId = optional_param('group', 0, PARAM_INT);
 	$cId = optional_param('cat', 0, PARAM_INT);
+	$act = optional_param('act', '', PARAM_TEXT);
 	
 	$title = get_string('category_restrict','local_category_restrict');
     $PAGE->set_pagelayout('admin');
@@ -46,18 +44,14 @@
     $PAGE->set_title($title);
     
 	
-
 	echo $OUTPUT->header();
 	echo $OUTPUT->heading_with_help($title, 'category_restrict','local_category_restrict');
-
     if (!is_siteadmin()) {
         print_error('Access denied');
     }
-
 	$allGroups	=	get_all_groups();
 	$allCats	=	get_all_category();
 	echo $OUTPUT->box_start();
-
 	if(isset($_POST['btnSubmit'])) {
 	
 		$msg	=	insert_multiple_course($_POST);
@@ -65,10 +59,14 @@
 	$CoursesSelect ='';
 	if($gId > 0 && $cId >0) {
 		$Courses =	get_courses_by_cat($cId);
-		$CoursesSelect =	get_courses_select_box($cId,gId);
+		$CoursesSelect =	get_courses_select_box($cId,$gId);
 	}
 	
+	if($act=="del") {
+		$msg	=	delete_multiple_course($cId,$gId);
+	}
 	
+	$GroupCourses	=	get_groups_cats($cId,$gId);
 ?>
 <script src="jquery.min.js"></script>
 <link href="multiple-select.css" rel="stylesheet" />
@@ -85,7 +83,6 @@
     <label for="exampleInputEmail1">Select Group</label>
     <select id="group" required="required" name="group">
                                       				<?php	echo "<option value=''>Select a Group</option>";
-
 														foreach($allGroups as $Group){
 															if(isset($gId) && $Group->id == $gId)
 																echo "<option value='".$Group->id."' selected='selected'>$Group->group_name</option>";
@@ -101,7 +98,6 @@
     <label for="exampleInputEmail1">Select Category</label>
     <select id="cat" required="required" name="cat">
                                       				<?php	echo "<option value=''>Select a Category</option>";
-
 														foreach($allCats as $Cat){
 															if(isset($cId) && $Cat->id == $cId)
 																echo "<option value='".$Cat->id."' selected='selected'>$Cat->name</option>";
@@ -116,20 +112,41 @@
   <div class="form-group">
     <label for="exampleSelect1">Select Course / Resources</label>
 	  <?php echo $CoursesSelect;?>
-    	<?php /*?><select multiple="multiple" style="width:300px" name="multiCourse" id="multiCourse">
-        <?php foreach($Courses as $Course){?>
-        <optgroup label="<?php echo $Course->id." - ".$Course->fullname;?>">
-            <?php echo display_course_modules($Course->id);?>
-           
-        </optgroup>
-        <?php } ?>
-        
-    </select><?php */?>
-
+   
   </div>
-  <input type="text" name="catCourseIds" value="" id="catCourseIds"  />
+  <input type="hidden" name="catCourseIds" value="" id="catCourseIds"  />
   <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
 </form>
+
+
+<h2> Manage Groups </h2>                                                                               
+  <div class="table-responsive">          
+  <table class="table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Group Name</th>
+        <th>Category Name</th>
+        <th>Edit</th>
+      </tr>
+    </thead>
+    <tbody>
+	<?php $i=1;if(count($GroupCourses) > 0) {
+		foreach ($GroupCourses as $Record) {
+	?>
+      <tr>
+        <td><?php echo $i++;?></td>
+        <td><?php echo get_group_name($Record->group_id);?></td>
+        <td><?php echo get_cat_name($Record->category_id);?></td>
+        <td><a title="Delete" href="?act=del&group=<?php echo $Record->group_id;?>&cat=<?php echo $Record->category_id;?>"><img src="<?php echo $OUTPUT->pix_url('t/delete');?>" alt="Delete" class="iconsmall"></a> 
+		<a title="Edit" href="?group=<?php echo $Record->group_id;?>&cat=<?php echo $Record->category_id;?>"><img src="<?php echo $OUTPUT->pix_url('t/edit');?>" alt="Edit" class="iconsmall"></a>
+		</td>
+      </tr>
+	  <?php } }?>
+    </tbody>
+  </table>
+  </div>
+
 
 <script>
         $("#multiCourse").multipleSelect({
@@ -169,6 +186,5 @@
 <?php
 	
 	echo $OUTPUT->box_end();
-
     echo $OUTPUT->footer();
 ?>
