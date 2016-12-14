@@ -58,8 +58,14 @@
 	$allCats	=	get_all_category();
 	echo $OUTPUT->box_start();
 
+	if(isset($_POST['btnSubmit'])) {
+	
+		$msg	=	insert_multiple_course($_POST);
+	}
+	$CoursesSelect ='';
 	if($gId > 0 && $cId >0) {
 		$Courses =	get_courses_by_cat($cId);
+		$CoursesSelect =	get_courses_select_box($cId,gId);
 	}
 	
 	
@@ -68,8 +74,13 @@
 <link href="multiple-select.css" rel="stylesheet" />
 <link href="base.css" rel="stylesheet" />
 <script src="multiple-select.js"></script>
-
-<form method="post" action="">
+<?php if($msg!='') {?>
+<span class="notifications" id="user-notifications"><div class="alert alert-info alert-block fade in " role="alert">
+    <button type="button" class="close" data-dismiss="alert"> * </button>
+    <?php echo $msg; $msg='';?>
+</div></span>
+<?php } ?>
+<form method="post" action="" onsubmit="return updateCourse()" >
   <div class="form-group">
     <label for="exampleInputEmail1">Select Group</label>
     <select id="group" required="required" name="group">
@@ -104,23 +115,24 @@
   
   <div class="form-group">
     <label for="exampleSelect1">Select Course / Resources</label>
-    	<select multiple="multiple" style="width:300px" name="test[]" id="courses">
+	  <?php echo $CoursesSelect;?>
+    	<?php /*?><select multiple="multiple" style="width:300px" name="multiCourse" id="multiCourse">
         <?php foreach($Courses as $Course){?>
-        <optgroup label="<?php echo $Course->id.":".$Course->fullname;?>">
+        <optgroup label="<?php echo $Course->id." - ".$Course->fullname;?>">
             <?php echo display_course_modules($Course->id);?>
            
         </optgroup>
         <?php } ?>
         
-    </select>
+    </select><?php */?>
 
   </div>
-  
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <input type="text" name="catCourseIds" value="" id="catCourseIds"  />
+  <button type="submit" class="btn btn-primary" name="btnSubmit">Submit</button>
 </form>
 
 <script>
-        $("#courses").multipleSelect({
+        $("#multiCourse").multipleSelect({
             filter: true,
            
         });
@@ -132,9 +144,14 @@
             $("select").multipleSelect("checkAll");
         });
 		function updateCourse(){
-		 	alert("Selected texts: " + $("select").multipleSelect("getSelects", "text"));
-			 $("#selVal").val($("select").multipleSelect("getSelects", "text"));
-			 return true;
+			$checkAll = $('input[data-name="selectAllmultiCourse"]');
+			if($checkAll.is(':checked')) {
+				$("#catCourseIds").val('All');
+			} else {
+				var text_val = $('.ms-choice').children('span').text(); 
+				$("#catCourseIds").val(text_val);
+			}
+		 	return true;
 		}
 		
 		$('#group').on('change', function() {
