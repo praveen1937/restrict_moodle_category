@@ -117,6 +117,26 @@ function get_all_category() {
 	$result = $DB->get_records('course_categories');
 	return $result;
 }
+
+function get_courses_select_box($cId, gId) {
+	global $DB;
+	$select ='';
+	$Courses = $DB->get_records('course', array('category'=>$cId));
+	echo "comes";exit;
+	$ip = "-";
+	"<option value='".$rsMod->cm_id."'> $rsMod->cm_id - $rsMod->cm_name</option>";
+	$select .= "<select multiple=multiple style=width:300px name=multiCourse id=multiCourse>";
+        foreach($Courses as $Course){
+        	$select .= "<optgroup label='".$Course->id.$ip.$Course->fullname."'>";
+            $select .= display_course_modules($Course->id);
+           
+        	$select .= "</optgroup>";
+        } 
+        
+    $select .= "</select>";
+	
+	return $select;
+}
 function get_courses_by_cat($cat) {
 	global $DB;
 	$result = $DB->get_records('course', array('category'=>$cat));
@@ -133,10 +153,53 @@ function display_course_modules($csId) {
 		 $sql = "SELECT cm.id as cm_id, m.name as cm_name, md.name AS mod_type FROM {course_modules} cm JOIN {modules} md ON md.id = cm.module JOIN {".$module_name."} m ON m.id = cm.instance $sectionjoin WHERE cm.id = ".$Module->id." AND md.name = '$module_name'";
 	
     		$rsMod =  $DB->get_record_sql($sql, $params, $strictness);
-			echo "<option value='".$rsMod->cm_id."'>$rsMod->cm_name</option>";
+			return "<option value='".$rsMod->cm_id."'> $rsMod->cm_id - $rsMod->cm_name</option>";
 	}
 }
-function get_module_name($Module) {
+function insert_multiple_course($Param) {
 	global $DB;
-	//$result = get_fast_modinfo($Module->course);
+	
+	$groupId	= $Param['group'];
+	$catId		= $Param['cat'];
+	$courseCatId	= $Param['catCourseIds'];
+	
+	if(trim($courseCatId) == 'All') {
+		insert_cr_help($groupId,$catId,$catId,'category',0);
+	} else {
+		$coursesArr = explode("=>",$courseCatId);
+		foreach($coursesArr as $Courses) {
+			$courseContent = explode(':',$Courses,2);
+			$course = $courseContent[0];
+			$content ='';
+			if(count($courseContent)==2) {
+				$content = $courseContent[1];
+			}
+			list($courseId, $courseName) = explode('-',$course,2);
+			$courseId = str_replace('[','',$courseId);
+			if($content=='') {
+				insert_cr_help($groupId,$catId,$courseId,'course',$catId);
+			} else {
+				$Modules = explode(',',$content);
+				foreach($Modules as $Module) {
+					list($modId, $modName) = explode('-',$Module,2);
+					insert_cr_help($groupId,$catId,$modId,'module',$courseId);
+				}
+			}
+		}
+	}
+	return "Courses updated";
+}
+
+function insert_cr_help($groupId,$catId,$resId,$resType,$parentId) {
+	global $DB;
+	
+	
+		$record = new stdClass();
+		$record->group_id	=	$groupId;
+		$record->category_id	=	$catId;
+		$record->restrict_id	=	$resId;
+		$record->restrict_type	=	$resType;
+		$record->parent_id	=	$parentId;
+		
+		$lastinsertid = $DB->insert_record('local_cr', $record, false);
 }
