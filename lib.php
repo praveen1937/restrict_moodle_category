@@ -1,10 +1,5 @@
 <?php
-/**
- * Library of useful functions
- * @copyright 2013 Bruno Sampaio
- * @package core
- * @subpackage institutionaaq
- */
+
 defined('MOODLE_INTERNAL') || die;
 function insertGroups($Param) {
 	global $DB;
@@ -147,20 +142,27 @@ function display_course_modules($csId,$CategoryChecked,$CourseChecked,$gId) {
 	global $DB;
 	$option = '';
 	$result = $DB->get_records('course_modules', array('course'=>$csId));
-	
-	foreach($result as $Module) {
+	if(count($result) > 0) {
+		foreach($result as $Module) {
+			
+			$module_name = $DB->get_field_sql("select name from {modules} c where c.id = ".$Module->module."");
 		
-		$module_name = $DB->get_field_sql("select name from {modules} c where c.id = ".$Module->module."");
-	
-		 $sql = "SELECT cm.id as cm_id, m.name as cm_name, md.name AS mod_type FROM {course_modules} cm JOIN {modules} md ON md.id = cm.module JOIN {".$module_name."} m ON m.id = cm.instance $sectionjoin WHERE cm.id = ".$Module->id." AND md.name = '$module_name'";
-	
-    		$rsMod =  $DB->get_record_sql($sql, $params, $strictness);
-			$ModuleChecked = check_selected($rsMod->cm_id, 'module', $gId);
-			if($CategoryChecked==true || $CourseChecked == true || $ModuleChecked == true) {
-				$option .= "<option value='".$rsMod->cm_id."' selected='selected'>$rsMod->cm_id - $rsMod->cm_name</option>";
-			} else {
-				$option .= "<option value='".$rsMod->cm_id."'>$rsMod->cm_id - $rsMod->cm_name</option>";
-			}
+			 $sql = "SELECT cm.id as cm_id, m.name as cm_name, md.name AS mod_type FROM {course_modules} cm JOIN {modules} md ON md.id = cm.module JOIN {".$module_name."} m ON m.id = cm.instance $sectionjoin WHERE cm.id = ".$Module->id." AND md.name = '$module_name'";
+		
+				$rsMod =  $DB->get_record_sql($sql, $params, $strictness);
+				$ModuleChecked = check_selected($rsMod->cm_id, 'module', $gId);
+				if($CategoryChecked==true || $CourseChecked == true || $ModuleChecked == true) {
+					$option .= "<option value='".$rsMod->cm_id."' selected='selected'>$rsMod->cm_id - $rsMod->cm_name</option>";
+				} else {
+					$option .= "<option value='".$rsMod->cm_id."'>$rsMod->cm_id - $rsMod->cm_name</option>";
+				}
+		}
+	} else {
+		if($CategoryChecked==true || $CourseChecked == true || $ModuleChecked == true) {
+			$option .= "<option value='0' selected='selected'>All Future Modules</option>";
+		} else {
+			$option .= "<option value='0'>All Future Modules</option>";
+		}
 	}
 	return $option;
 }
@@ -243,7 +245,6 @@ function get_groups_cats($cId,$gId) {
 		return $result;
 	
 }
-
 function get_group_name($gId) {
 	global $DB;
 	$group_name = $DB->get_field_sql("select group_name from {local_cr_groups} where id = '$gId'");
@@ -254,12 +255,43 @@ function get_cat_name($cId) {
 	$cat_name = $DB->get_field_sql("select name from {course_categories} where id = '$cId'");
 	return $cat_name;
 }
-
 function delete_multiple_course($groupId,$catId) {
 	global $DB;
 	$sql = "delete from {local_cr} where group_id = '$groupId' and category_id = '$catId'";
 	$DB->execute($sql);
 	return "Records Deleted!";
 }
-		
-		
+function get_category_sorted($uId) {
+	global $DB;
+	//echo $gId; exit;
+	$sql="select * from {course_categories} $con order by sortorder"; 
+     $res=$DB->get_records_sql($sql);
+	 
+	 print_r($res);
+	 echo "<br>After loop <br>";
+	 $groupId = get_group_id_by_user(6);
+	 echo $groupId;
+	 if($groupId > 0) {
+	 	$res = trim_category($res,$groupId);
+	 }
+	 print_r($res);
+}
+function trim_category($Result) {
+	foreach($Result as $key => $res) {
+		if($DB->record_exists('local_cr', array('group_id' => $res->id,'restrict_type' => 'category'))) {
+			unset($Result[$key]);
+		} else {
+		}
+	}
+	
+	return $Result;
+}
+function get_group_id_by_user($uId) {
+	global $DB;
+	$group_id = $DB->get_field_sql("select group_id from {local_cr_group_members} where user_id = '$cId'");
+	if($group_id!= NULL && $group_id > 0) {
+		return $group_id;
+	} else {
+		return 0;
+	}
+}
