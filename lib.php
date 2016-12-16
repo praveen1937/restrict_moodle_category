@@ -1,5 +1,4 @@
 <?php
-
 defined('MOODLE_INTERNAL') || die;
 function insertGroups($Param) {
 	global $DB;
@@ -123,7 +122,7 @@ function get_courses_select_box($catId, $gId) {
 	
 	return $select;
 }
-//$restrictId => catId / CourseId / Module ID $type = cat/course/module
+//$restrictId => catId / CourseId / Module ID $type = category/course/module
 function check_selected($restrictId, $type, $group) {
 	global $DB;
 	
@@ -267,28 +266,28 @@ function get_category_sorted($uId) {
 	$sql="select * from {course_categories} $con order by sortorder"; 
      $res=$DB->get_records_sql($sql);
 	 
-	 print_r($res);
-	 echo "<br>After loop <br>";
+	
 	 $groupId = get_group_id_by_user(6);
-	 echo $groupId;
+	
 	 if($groupId > 0) {
 	 	$res = trim_category($res,$groupId);
 	 }
-	 print_r($res);
-}
-function trim_category($Result) {
-	foreach($Result as $key => $res) {
-		if($DB->record_exists('local_cr', array('group_id' => $res->id,'restrict_type' => 'category'))) {
-			unset($Result[$key]);
-		} else {
-		}
-	}
 	
-	return $Result;
+}
+function trim_category($Result,$gId) {
+	foreach($Result as $key => $res) {
+		if(check_selected($res->id, 'category', $gId) ==  true) {
+			unset($Result[$key]);
+		} 
+	}
+	if(count($Result) > 0) {
+		$Result = array_values($Result);
+	}
+	return array_values($Result);
 }
 function get_group_id_by_user($uId) {
 	global $DB;
-	$group_id = $DB->get_field_sql("select group_id from {local_cr_group_members} where user_id = '$cId'");
+	$group_id = $DB->get_field_sql("select group_id from {local_cr_group_members} where user_id = '$uId'");
 	if($group_id!= NULL && $group_id > 0) {
 		return $group_id;
 	} else {
