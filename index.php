@@ -12,25 +12,19 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <htt00p://www.gnu.org/licenses/>.
-//  Livetek Software Consulting Services custom code
-//  Coder: Deepali Gujarathi
-//  Contact: info@livetek.co.in
-//  Date: 18 March 2013
-//
-//  Description: Allows admin to enrol one or more users into multiple courses at the same time.
-//  Using this plugin allows admin to manage course enrolments from one screen itself
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
- * Multiple Enrollments - Allows admin to enrol one or more users into multiple courses at the same time.
- *                        There is a single screen which allows admin to manage course enrolments.
+ * Category Restrict - Allows admin to restrict a Category or Course or Modules for group of users
  *
  * @package      local
- * @subpackage   multiple_enrollments
- * @maintainer   Livetek Software Consulting Services
- * @author       Deepali Gujarathi
- * @contact      info@livetek.co.in
+ * @subpackage   category_restrict
+ * @maintainer   Cnetric
+ * @author       Praveen Charles 
+ * @contact      praveen1937@gmail.com
  * @license      http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 	require_once('../../config.php');
     require_once('lib.php');
     
@@ -146,7 +140,7 @@
     </tbody>
   </table>
   </div>
-
+<?php get_category_sorted(3);?>
 
 <script>
         $("#multiCourse").multipleSelect({
