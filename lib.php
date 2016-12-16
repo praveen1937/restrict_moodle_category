@@ -63,7 +63,7 @@ function get_potential_users($gId) {
 	global $DB;
 	//echo $gId; exit;
 	if($gId>0) {
-		$sql = "select * from {user} where id not in (select user_id from {local_cr_group_members} where group_id = '$gId') and deleted = 0 ";
+		$sql = "select * from {user} where id not in (select user_id from {local_cr_group_members}) and deleted = 0 ";
 		
 	} else {
 		$sql = "select * from {user} where deleted = 0 ";
@@ -266,24 +266,23 @@ function get_category_sorted($uId) {
 	$sql="select * from {course_categories} $con order by sortorder"; 
      $res=$DB->get_records_sql($sql);
 	 
-	
 	 $groupId = get_group_id_by_user(6);
-	
+	 $resType = 'category';
 	 if($groupId > 0) {
-	 	$res = trim_category($res,$groupId);
+	 	$res = local_cr_trim($res,$groupId,$resType);
 	 }
 	
 }
-function trim_category($Result,$gId) {
-	foreach($Result as $key => $res) {
-		if(check_selected($res->id, 'category', $gId) ==  true) {
-			unset($Result[$key]);
+function local_cr_trim($resultSet,$gId,$resType) {
+	foreach($resultSet as $key => $res) {
+		if(check_selected($res->id, $resType, $gId) ==  true) {
+			unset($resultSet[$key]);
 		} 
 	}
-	if(count($Result) > 0) {
-		$Result = array_values($Result);
+	if(count($resultSet) > 0) {
+		$resultSet = array_values($resultSet);
 	}
-	return array_values($Result);
+	return $resultSet;
 }
 function get_group_id_by_user($uId) {
 	global $DB;
