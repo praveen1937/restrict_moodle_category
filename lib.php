@@ -262,25 +262,24 @@ function delete_multiple_course($groupId,$catId) {
 }
 function get_category_sorted($uId) {
 	global $DB;
-	//echo $gId; exit;
 	$sql="select * from {course_categories} $con order by sortorder"; 
-     $res=$DB->get_records_sql($sql);
-	 
-	 $groupId = get_group_id_by_user(6);
-	 $resType = 'category';
-	 if($groupId > 0) {
-	 	$res = local_cr_trim($res,$groupId,$resType);
-	 }
+    $res=$DB->get_records_sql($sql);
 	
+	 $groupId = get_group_id_by_user(7);
+	 $resType = 'category';
+	 
+	$res = local_category_restrict_trim($res,$groupId,$resType);
 }
-function local_cr_trim($resultSet,$gId,$resType) {
-	foreach($resultSet as $key => $res) {
-		if(check_selected($res->id, $resType, $gId) ==  true) {
-			unset($resultSet[$key]);
-		} 
-	}
-	if(count($resultSet) > 0) {
-		$resultSet = array_values($resultSet);
+function local_category_restrict_trim($resultSet,$gId,$resType) {
+	if($gId > 0) {
+		foreach($resultSet as $key => $res) {
+			if(check_selected($res->id, $resType, $gId) ==  true) {
+				unset($resultSet[$key]);
+			} 
+		}
+		if(count($resultSet) > 0) {
+			$resultSet = array_values($resultSet);
+		}
 	}
 	return $resultSet;
 }
