@@ -28,3 +28,6 @@ Release Notes
 v1.1.1
 ajax_assign_multiple_courses.php
 An extra condition in the query to get only specific users to be displayed is got rid of
+
+
+http://ec2-35-154-65-21.ap-south-1.compute.amazonaws.com/login/index.php
