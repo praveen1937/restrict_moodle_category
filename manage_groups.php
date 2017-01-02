@@ -41,15 +41,15 @@
 	$edit = optional_param('edit', 0, PARAM_INT);
 	$delete = optional_param('del', 0, PARAM_INT);
     
-	$title = get_string('manage_groups','local_category_restrict');
+	$title = get_string('manage_groups','local_theme_background');
     $PAGE->set_pagelayout('admin');
-    $PAGE->set_url(new moodle_url('/local/category_restrict/manage_groups.php'));
+    $PAGE->set_url(new moodle_url('/local/theme_background/manage_groups.php'));
     $PAGE->set_title($title);
     
 	
 
 	echo $OUTPUT->header();
-	echo $OUTPUT->heading_with_help($title, 'category_restrict','local_category_restrict');
+	echo $OUTPUT->heading_with_help($title, 'theme_background','local_theme_background');
 
 
 
@@ -58,66 +58,82 @@
     }
 
 	if(isset($_POST['submitbutton'])) {
-		$message	= insertGroups($_POST);
+		$message	= insertImage();
 		echo "<h2> $message </h2>";
 	}
 	
 	
 	
 	if(isset($_POST['updatebutton'])) {
-		$message	= updateGroup($_POST);
+		$message	= updateImage();
 		echo "<h2> $message </h2>";
 	}
 	
 	
 	if($edit > 0) {
-		$Group	=	getGroupById($edit);
+		$BackgroundImage	=	getCountryById($edit);
 	}
 	if($delete > 0) {
 		
-		$Group	=	deleteGroup($delete);
+		$Group	=	deleteCountry($delete);
 	}
 	
-	$rsGroups = $DB->get_records('local_cr_groups');
+	$rsImages = $DB->get_records('local_theme_background');
+	
+	$Countries =  getAllCountries();
+	
+	
 	
 	echo $OUTPUT->box_start();
 
 ?>
 <?php if ($edit > 0) {?>
-<form class="mform" id="mform1" method="post">
-	<input type="hidden" name="edit" id="edit" value="<?php echo $Group->id;?>"  />
+<form class="mform" id="mform1" method="post" enctype="multipart/form-data">
+	<input type="hidden" name="edit" id="edit" value="<?php echo $BackgroundImage->id;?>"  />
+    <input type="hidden" name="hdnImage" id="hdnImage" value="<?php echo $BackgroundImage->background_image;?>"  />
 	<fieldset id="id_moodle" class="clearfix collapsible">
 		
-		<legend>Update Group</legend>
+		<legend>Update Background Image : <?php echo $Countries[$BackgroundImage->country_name];?> </legend>
 		<div class="fcontainer clearfix" >
-			<div id="fitem_id_username" class="fitem fitem_ftext  "><div class="fitemtitle"><label for="id_groupname">Group Name </label></div>
-			<div class="felement ftext"><input size="20" name="group_name" id="id_groupname" type="text" value="<?php echo $Group->group_name;?>"></div></div>
+			<div id="fitem_id_username" class="fitem fitem_ftext  "><div class="fitemtitle"><label for="id_groupname">Select Image </label></div>
+			<div class="felement ftext"> <input type="file" name="image" id="image"> &nbsp;&nbsp; <img src="<?php echo $BackgroundImage->background_image;?>" height="50" width="50"></div></div>
 		</div>
 	
 	</fieldset>
 	
 	<fieldset>
 		
-		<div id="fgroup_id_buttonar" class="fitem fitem_actionbuttons fitem_fgroup "><div class="felement fgroup"><input name="updatebutton" value="Update Group" id="id_submitbutton" type="submit"> <input name="cancel" value="Cancel" onclick="skipClientValidation = true; return true;" class=" btn-cancel" id="id_cancel" type="submit"></div></div>
+		<div id="fgroup_id_buttonar" class="fitem fitem_actionbuttons fitem_fgroup "><div class="felement fgroup"><input name="updatebutton" value="Update" id="id_submitbutton" type="submit"> <input name="cancel" value="Cancel" onclick="skipClientValidation = true; return true;" class=" btn-cancel" id="id_cancel" type="submit"></div></div>
 		
 	</fieldset>
 		
 </form>
 <?php } else {?>
-<form class="mform" id="mform1" method="post">
+<form class="mform" id="mform1" method="post" enctype="multipart/form-data">
 	<fieldset id="id_moodle" class="clearfix collapsible">
 		
-		<legend>Add New Group</legend>
+		<legend>Add New Country Background Image</legend>
 		<div class="fcontainer clearfix" >
-			<div id="fitem_id_username" class="fitem fitem_ftext  "><div class="fitemtitle"><label for="id_groupname">Group Name </label></div>
-			<div class="felement ftext"><input size="20" name="group_name" id="id_groupname" type="text"></div></div>
+			<div id="fitem_id_username" class="fitem fitem_ftext  "><div class="fitemtitle"><label for="id_groupname">Country Name </label></div>
+			<div class="felement ftext"><select id="country" required="required" name="country">
+                                      				<?php	echo "<option value=''>Select a Country</option>";
+														
+														foreach($Countries as $CountryCode => $CountryName){
+																echo "<option value='".$CountryCode."'>$CountryName</option>";
+														}
+														?>
+									</select></div></div>
+		</div>
+        <div class="fcontainer clearfix" >
+			<div id="fitem_id_username" class="fitem fitem_ftext  "><div class="fitemtitle"><label for="id_groupname">Select Image </label></div>
+			<div class="felement ftext"> <input type="file" name="image" id="image"></div></div>
 		</div>
 	
 	</fieldset>
 	
 	<fieldset>
 		
-		<div id="fgroup_id_buttonar" class="fitem fitem_actionbuttons fitem_fgroup "><div class="felement fgroup"><input name="submitbutton" value="Add Group" id="id_submitbutton" type="submit"> <input name="cancel" value="Cancel" onclick="skipClientValidation = true; return true;" class=" btn-cancel" id="id_cancel" type="submit"></div></div>
+		<div id="fgroup_id_buttonar" class="fitem fitem_actionbuttons fitem_fgroup "><div class="felement fgroup"><input name="submitbutton" value="Add" id="id_submitbutton" type="submit"> <input name="cancel" value="Cancel" onclick="skipClientValidation = true; return true;" class=" btn-cancel" id="id_cancel" type="submit"></div></div>
 		
 	</fieldset>
 		
@@ -131,22 +147,21 @@
     <thead>
       <tr>
         <th>#</th>
-        <th>Group Name</th>
-        <th>Group Size</th>
+        <th>Country Name</th>
+        <th>Background Image</th>
         <th>Edit</th>
       </tr>
     </thead>
     <tbody>
-	<?php $i=1;if(count($rsGroups) > 0) {
-		foreach ($rsGroups as $Group) {
+	<?php $i=1;if(count($rsImages) > 0) {
+		foreach ($rsImages as $Image) {
 	?>
       <tr>
         <td><?php echo $i++;?></td>
-        <td><?php echo $Group->group_name;?></td>
-        <td><?php echo get_group_size($Group->id);?></td>
-        <td><a title="Delete" href="?del=<?php echo $Group->id;?>"><img src="<?php echo $OUTPUT->pix_url('t/delete');?>" alt="Delete" class="iconsmall"></a> 
-		<a title="Edit" href="?edit=<?php echo $Group->id;?>"><img src="<?php echo $OUTPUT->pix_url('t/edit');?>" alt="Edit" class="iconsmall"></a>
-		<a title="Assign" href="assign_members.php?gId=<?php echo $Group->id;?>"><img src="<?php echo $OUTPUT->pix_url('i/user');?>" alt="Assign" class="iconsmall"></a>
+        <td><?php echo $Countries[$Image->country_name];?></td>
+        <td><img src="<?php echo $Image->background_image;?>" height="50" width="50"></td>
+        <td><a title="Delete" href="?del=<?php echo $Image->id;?>"><img src="<?php echo $OUTPUT->pix_url('t/delete');?>" alt="Delete" class="iconsmall"></a> 
+		<a title="Edit" href="?edit=<?php echo $Image->id;?>"><img src="<?php echo $OUTPUT->pix_url('t/edit');?>" alt="Edit" class="iconsmall"></a>
 		</td>
       </tr>
 	  <?php } }?>
