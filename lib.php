@@ -1,294 +1,139 @@
 <?php
 defined('MOODLE_INTERNAL') || die;
-function insertGroups($Param) {
-	global $DB;
-	$groupName	= $Param['group_name'];
+function insertImage() {
+	global $DB, $CFG;
+	$countryCode	= $_POST['country'];
 	
-	if($DB->record_exists('local_cr_groups', array('group_name' => $groupName))) {
-		return ' Record Exists !';
+	if($DB->record_exists('local_theme_background', array('country_name' => $countryCode))) {
+		return ' Record Exists. Please use different Country !';
 	} else {
-		$record = new stdClass();
-		$record->group_name	=	$groupName;
-		$lastinsertid = $DB->insert_record('local_cr_groups', $record, false);
-		return 'Group Added';
-	}
-}
-function get_group_size($gId) {
-	global $DB;
-	//echo $gId; exit;
-	$result = $DB->count_records('local_cr_group_members', array('group_id' => $gId));
-	return $result;
-}
-function getGroupById($gId) {
-	global $DB;
-	//echo $gId; exit;
-	$result = $DB->get_record('local_cr_groups', array('id' => $gId));
-	return $result;
-}
-function updateGroup($Param) {
-	global $DB;
-	$groupName	= $Param['group_name'];
-	$groupId	= $Param['edit'];
-	
-	
-	$sql = "update {local_cr_groups} set group_name = '$groupName' where id = '$groupId'";
-//	exit;
-	$DB->execute($sql);
-	return 'Group Updated';
-}
-function deleteGroup($groupId) {
-	global $DB;
-	
-	
-	
-	$sql = "delete from {local_cr_groups} where id = '$groupId'";
-	$DB->execute($sql);
-	
-	$sqlUser = "delete from {local_cr_group_members} where group_id = '$groupId'";
-	$DB->execute($sqlUser);
-	return 'Group Updated';
-}
-function get_group_users($gId) {
-	global $DB;
-	//echo $gId; exit;
-	if($gId>0) {
-		$sql = "select * from {user} a left join {local_cr_group_members} b on a.id = b.user_id where a.deleted = 0 and a.id = b.user_id and b.group_id = '$gId'";
-		$result = $DB->get_records_sql($sql);
-		return $result;
-	} else {
-		return NULL;
-	}
-}
-function get_potential_users($gId) {
-	global $DB;
-	//echo $gId; exit;
-	if($gId>0) {
-		$sql = "select * from {user} where id not in (select user_id from {local_cr_group_members}) and deleted = 0 ";
 		
-	} else {
-		$sql = "select * from {user} where deleted = 0 ";
-	}
-	$result = $DB->get_records_sql($sql);
-	return $result;
-}
-function get_all_groups() {
-	global $DB;
-	$result = $DB->get_records('local_cr_groups');
-	return $result;
-}
-function updateGroupMembers($Param) {
-	global $DB;
-	$gId	= $Param['batch'];
-	$groupMembers = $Param['groups'];
-	
-	$DB->delete_records('local_cr_group_members', array('group_id' => $gId));
-	
-	foreach($groupMembers as $user) {
-		$record = new stdClass();
-		$record->group_id	=	$gId;
-		$record->user_id	=	$user;
-		//echo $gId.'=>'.$user;echo "<br>";
-		
-		$lastinsertid = $DB->insert_record('local_cr_group_members', $record, false);
-	}
-	
-	return 'Group Updated';
-	
-}
-function get_all_category() {
-	global $DB;
-	
-	$result = $DB->get_records('course_categories');
-	return $result;
-}
-function get_courses_select_box($catId, $gId) {
-	global $DB;
-	$select ='';
-	$Courses = $DB->get_records('course', array('category'=>$catId));
-	
-	$CategoryChecked = check_selected($catId, 'category', $gId);
-	
-	$ip = "-";
-	$select .= '<select multiple="multiple" style="width:300px" name="multiCourse" id="multiCourse">';
-        foreach($Courses as $Course){
-			$CourseChecked = check_selected($Course->id, 'course', $gId);
-        	$select .= "<optgroup label='".$Course->id.$ip.$Course->fullname."'>";
-            $select .= display_course_modules($Course->id,$CategoryChecked,$CourseChecked,$gId);
-           
-        	$select .= "</optgroup>";
-        } 
-        
-    $select .= "</select>";
-	
-	return $select;
-}
-//$restrictId => catId / CourseId / Module ID $type = category/course/module
-function check_selected($restrictId, $type, $group) {
-	global $DB;
-	
-	if($DB->record_exists('local_cr', array('restrict_id' => $restrictId, 'restrict_type' => $type,  'group_id' => $group))) {
-		return true;
-	} else {
-		return false;
-	}
-}
-function get_courses_by_cat($cat) {
-	global $DB;
-	$result = $DB->get_records('course', array('category'=>$cat));
-	return $result;
-}
-function display_course_modules($csId,$CategoryChecked,$CourseChecked,$gId) {
-	global $DB;
-	$option = '';
-	$result = $DB->get_records('course_modules', array('course'=>$csId));
-	if(count($result) > 0) {
-		foreach($result as $Module) {
-			
-			$module_name = $DB->get_field_sql("select name from {modules} c where c.id = ".$Module->module."");
-		
-			 $sql = "SELECT cm.id as cm_id, m.name as cm_name, md.name AS mod_type FROM {course_modules} cm JOIN {modules} md ON md.id = cm.module JOIN {".$module_name."} m ON m.id = cm.instance $sectionjoin WHERE cm.id = ".$Module->id." AND md.name = '$module_name'";
-		
-				$rsMod =  $DB->get_record_sql($sql, $params, $strictness);
-				$ModuleChecked = check_selected($rsMod->cm_id, 'module', $gId);
-				if($CategoryChecked==true || $CourseChecked == true || $ModuleChecked == true) {
-					$option .= "<option value='".$rsMod->cm_id."' selected='selected'>$rsMod->cm_id - $rsMod->cm_name</option>";
-				} else {
-					$option .= "<option value='".$rsMod->cm_id."'>$rsMod->cm_id - $rsMod->cm_name</option>";
-				}
+		$target_dir = "uploads/";
+		$target_file = $target_dir .time(). basename($_FILES["image"]["name"]);
+		$uploadOk = 1;
+		$imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
+		// Check if image file is a actual image or fake image
+		if(isset($_POST["submit"])) {
+			$check = getimagesize($_FILES["image"]["tmp_name"]);
+			if($check !== false) {
+				echo "File is an image - " . $check["mime"] . ".";
+				$uploadOk = 1;
+			} else {
+				echo "File is not an image.";
+				$uploadOk = 0;
+			}
 		}
-	} else {
-		if($CategoryChecked==true || $CourseChecked == true || $ModuleChecked == true) {
-			$option .= "<option value='0' selected='selected'>All Future Modules</option>";
+	
+		// Check file size
+		if ($_FILES["image"]["size"] > 500000) {
+			echo "Sorry, your file is too large.";
+			$uploadOk = 0;
+		}
+		// Allow certain file formats
+		if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+		&& $imageFileType != "gif" ) {
+			echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+			$uploadOk = 0;
+		}
+		// Check if $uploadOk is set to 0 by an error
+		if ($uploadOk == 0) {
+			echo "Sorry, your file was not uploaded.";
+		// if everything is ok, try to upload file
 		} else {
-			$option .= "<option value='0'>All Future Modules</option>";
-		}
-	}
-	return $option;
-}
-function insert_multiple_course($Param) {
-	global $DB;
-	
-	$groupId	= $Param['group'];
-	$catId		= $Param['cat'];
-	$courseCatId	= $Param['catCourseIds'];
-	
-	//Delete Records
-	$msg = delete_multiple_course($groupId,$catId);
-	
-	if(trim($courseCatId) == 'All') {
-		insert_cr_help($groupId,$catId,$catId,'category',0);
-	} else {
-		$coursesArr = explode("=>",$courseCatId);
-		foreach($coursesArr as $Courses) {
-			$courseContent = explode(':',$Courses,2);
-			
-			$course = $courseContent[0];
-			$content ='';
-			if(count($courseContent)==2) {
-				$content = $courseContent[1];
-			}
-		
-			list($courseId, $courseName) = explode('-',$course,2);
-			$courseId = str_replace('[','',$courseId);
-			if($content=='') {
-				insert_cr_help($groupId,$catId,$courseId,'course',$catId);
+			if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
+				$record = new stdClass();
+				$record->country_name	=	$countryCode;
+				$record->background_image	=	$CFG->wwwroot.'/local/theme_background/'.$target_file;
+				$lastinsertid = $DB->insert_record('local_theme_background', $record, false);
+				return 'Record Added';
 			} else {
-				$Modules = explode(',',$content);
-				foreach($Modules as $Module) {
-					list($modId, $modName) = explode('-',$Module,2);
-					insert_cr_help($groupId,$catId,$modId,'module',$courseId);
+				echo "Sorry, there was an error uploading your file.";
+				$uploadOk = 0;
+			}
+		}	
+	
+	}
+		
+}
+
+function getAllCountries() {
+	global $DB;
+	//echo $gId; exit;
+	$country = get_string_manager()->get_list_of_countries();
+	return array_merge(array('Default'=>'Default'),$country);
+}
+
+
+function getCountryById($gId) {
+	global $DB;
+	//echo $gId; exit;
+	$result = $DB->get_record('local_theme_background', array('id' => $gId));
+	return $result;
+}
+function updateImage() {
+	global $DB, $CFG;;
+	
+	$editId	= $_POST['edit'];
+	
+		
+		
+			$target_dir = "uploads/";
+			$target_file = $target_dir .time(). basename($_FILES["image"]["name"]);
+			$uploadOk = 1;
+			$imageFileType = pathinfo($target_file,PATHINFO_EXTENSION);
+			// Check if image file is a actual image or fake image
+			if(isset($_POST["submit"])) {
+				$check = getimagesize($_FILES["image"]["tmp_name"]);
+				if($check !== false) {
+					echo "File is an image - " . $check["mime"] . ".";
+					$uploadOk = 1;
+				} else {
+					echo "File is not an image.";
+					$uploadOk = 0;
 				}
 			}
-		}
-	}
-	return "Courses updated";
-}
-function insert_cr_help($groupId,$catId,$resId,$resType,$parentId) {
-	global $DB;
-	
-	
-		$record = new stdClass();
-		$record->group_id	=	$groupId;
-		$record->category_id	=	$catId;
-		$record->restrict_id	=	$resId;
-		$record->restrict_type	=	$resType;
-		$record->parent_id	=	$parentId;
 		
-		$lastinsertid = $DB->insert_record('local_cr', $record, false);
-}
-function get_groups_cats($cId,$gId) {
-	global $DB;
-	
-		$sqlWhere ="where ";
-		$sql='';
-		if($gId>0) {
-			$sql = "a.group_id = '$gId' ";
-		}
-		if($cId>0) {
-			if($sql=='') {
-				$sql = "a.category_id = '$cId'";
-			} else {
-				$sql = "and a.category_id = '$cId'";
+			// Check file size
+			if ($_FILES["image"]["size"] > 500000) {
+				echo "Sorry, your file is too large.";
+				$uploadOk = 0;
 			}
-		}
-		if($sql!='') {
-			$sql = $sqlWhere.$sql;
-		}
+			// Allow certain file formats
+			if($imageFileType != "jpg" && $imageFileType != "png" && $imageFileType != "jpeg"
+			&& $imageFileType != "gif" ) {
+				echo "Sorry, only JPG, JPEG, PNG & GIF files are allowed.";
+				$uploadOk = 0;
+			}
+			// Check if $uploadOk is set to 0 by an error
+			if ($uploadOk == 0) {
+				echo "Sorry, your file was not uploaded.";
+			// if everything is ok, try to upload file
+			} else {
+				if (move_uploaded_file($_FILES["image"]["tmp_name"], $target_file)) {
+					
+					$fileTargetName = $CFG->wwwroot.'/local/theme_background/'.$target_file;
+					$sql = "update {local_theme_background} set background_image = '$fileTargetName' where id = '$editId'"; 
+					$DB->execute($sql);
+					
+					return 'Image Updated!';
+				} else {
+					echo "Sorry, there was an error uploading your file.";
+					$uploadOk = 0;
+				}
+			}	
 		
-		
-		
-		$sqlNew = "select * from mdl_local_cr a group by concat(a.group_id, a.category_id)";
-		
-		$result =  $DB->get_records_sql($sqlNew);
-		
-		return $result;
 	
+	
+	//return 'Group Updated';
 }
-function get_group_name($gId) {
+function deleteCountry($countrId) {
 	global $DB;
-	$group_name = $DB->get_field_sql("select group_name from {local_cr_groups} where id = '$gId'");
-	return $group_name;
-}
-function get_cat_name($cId) {
-	global $DB;
-	$cat_name = $DB->get_field_sql("select name from {course_categories} where id = '$cId'");
-	return $cat_name;
-}
-function delete_multiple_course($groupId,$catId) {
-	global $DB;
-	$sql = "delete from {local_cr} where group_id = '$groupId' and category_id = '$catId'";
+	
+	
+	
+	$sql = "delete from {local_theme_background} where id = '$countrId'";
 	$DB->execute($sql);
-	return "Records Deleted!";
-}
-function get_category_sorted($uId) {
-	global $DB;
-	$sql="select * from {course_categories} $con order by sortorder"; 
-    $res=$DB->get_records_sql($sql);
 	
-	 $groupId = get_group_id_by_user(7);
-	 $resType = 'category';
-	 
-	$res = local_category_restrict_trim($res,$groupId,$resType);
-}
-function local_category_restrict_trim($resultSet,$gId,$resType) {
-	if($gId > 0) {
-		foreach($resultSet as $key => $res) {
-			if(check_selected($res->id, $resType, $gId) ==  true) {
-				unset($resultSet[$key]);
-			} 
-		}
-		if(count($resultSet) > 0) {
-			$resultSet = array_values($resultSet);
-		}
-	}
-	return $resultSet;
-}
-function get_group_id_by_user($uId) {
-	global $DB;
-	$group_id = $DB->get_field_sql("select group_id from {local_cr_group_members} where user_id = '$uId'");
-	if($group_id!= NULL && $group_id > 0) {
-		return $group_id;
-	} else {
-		return 0;
-	}
+	
+	return 'Recard Deleted!';
 }
