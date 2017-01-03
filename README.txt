@@ -1,33 +1,24 @@
-moodle-local_multiple_enrollments
-==================================
-A local plugin that allows admin to enrol multiple users into multiple courses.
-It also allows to enrol/unenrol multiple courses to/from a user.
+At the outset let me thank you for your time. Your profile has been shortlisted for the Written Assessment (Technical).
 
-Version
--------
-1.1.0 (2013032500)
+Please find the attached Technical Document [PHP - Offline Test.pdf] and follow the below guidelines towards you assessment.
 
-Requires:
---------
-Moodle 2.0 or higher
+Mandatory:
+Code to be developed using PHP & MySQL (MVC architecture + OOPS coding structure)
+Design normalized database.
+More focus will be give on BackEnd (Less preferences for UI part)
+Strict coding standards to be followed (Zend coding standard)
+Code should be optimized and best of breed logic to be used
+Avoid hard-codings (Use constants / configs).
+Use any 1 social login (Facebook / Google / Twitter)
+Use Package Managers for libraries (package.json / bower.json / composer.json)
+Optional: (But adds more value to your skillset)
+Use Automations if possible (grunt / gulp)
+Use GIT for versioning (commit your work for every 30min to 60min)
+Use Heroku: Cloud Application Platform to deploy your test and share the App - URL for review.
+Please share your completed code on or before 26/12/2016 (Monday).
 
-Installation:
-------------
-Download zip from: http://moodle.org/plugins/pluginversions.php?plugin=local_multiple_enrollments
-Unzip into the 'local' subfolder of your Moodle install.
-Rename the new folder to multiple_enrollments.
-Visit http://yoursite.com/admin to finish the installation. 
-
-Documentation:
--------------
-Please feel free to contribute documentation in the relevant area of
-the MoodleDocs wiki.
-
-Release Notes
----------------
-v1.1.1
-ajax_assign_multiple_courses.php
-An extra condition in the query to get only specific users to be displayed is got rid of
-
-
-http://ec2-35-154-65-21.ap-south-1.compute.amazonaws.com/login/index.php
+Sources to submit:
+GIT url (or) Zipped file (full source except external libraries)
+DB SQL structure (.sql file)
+Heroku URL  (if used)
+Thanks,
